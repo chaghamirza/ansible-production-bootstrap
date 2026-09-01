@@ -1,0 +1,6 @@
+---
+- name: Setup Docker & Docker-compose on Labs Servers
+  hosts: servers
+  become: true
+  roles:
+    - role: docker

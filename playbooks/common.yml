@@ -1,0 +1,6 @@
+---
+- name: Setup Common and Basic Tools on Labs Servers
+  hosts: servers
+  become: true
+  roles:
+    - role: common

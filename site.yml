@@ -1,0 +1,12 @@
+---
+- name: Apply Common setup
+  import_playbook: common.yml
+
+- name: Apply System Hardening
+  import_playbook: hardening.yml
+
+- name: Install Docker
+  import_playbook: docker.yml
+
+- name: Setup Kubernetes Cluster
+  import_playbook: kubernetes.yml
