@@ -1,0 +1,34 @@
+---
+# roles/common/defaults/main.yml
+
+system_timezone: "Asia/Tehran"
+
+# Base system administration packages
+system_packages:
+  - curl
+  - wget
+  - git
+  - vim
+  - htop
+  - unzip
+  - tar
+  - jq
+  - apt-transport-https
+  - ca-certificates
+  - gnupg
+  - lsb-release
+  - chrony
+  - tree
+
+# Network administration & troubleshooting utilities
+network_packages:
+  - net-tools # netstat, ifconfig, route, arp
+  - dnsutils # dig, nslookup, host
+  - iputils-ping # ping
+  - traceroute # traceroute
+  - mtr-tiny # network diagnostic tool
+  - tcpdump # network packet analyzer
+  - netcat-openbsd # nc (netcat)
+  - socat # multipurpose relay tool (great for k8s/container debug)
+  - bridge-utils # brctl for network bridge inspection
+  - iperf3 # network bandwidth testing tool

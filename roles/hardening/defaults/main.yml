@@ -1,0 +1,11 @@
+---
+# SSH Configurations
+ssh_port: 2222
+system_user: "ubuntu"
+ssh_permit_root_login: "prohibit-password"
+ssh_password_authentication: "no"
+ssh_max_auth_tries: "3"
+
+# Firewall Configuration (UFW)
+ufw_default_incoming_policy: deny
+ufw_default_outgoing_policy: allow

@@ -1,5 +1,5 @@
 ---
-- name: Restart chronyd
+- name: Restart Docker Service
   ansible.builtin.service:
-    name: chronyd
+    name: docker
     state: restarted

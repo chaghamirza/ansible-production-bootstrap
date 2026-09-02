@@ -1,0 +1,116 @@
+---
+# ==========================================
+# -1. Create System User and Passwordless Sudo
+# ==========================================
+- name: Ensure system user exists
+  ansible.builtin.user:
+    name: "{{ system_user }}"
+    shell: /bin/bash
+    create_home: yes
+    state: present
+
+- name: Ensure system user is in sudo group
+  ansible.builtin.user:
+    name: "{{ system_user }}"
+    groups: sudo
+    append: yes
+
+- name: Configure passwordless sudo for system user
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ system_user }}"
+    content: "{{ system_user }} ALL=(ALL) NOPASSWD:ALL\n"
+    mode: "0440"
+    validate: "visudo -cf %s"
+# ==========================================
+# 0. SSH Authorized Keys
+# ==========================================
+- name: Set up authorized keys for the system user
+  ansible.posix.authorized_key:
+    user: "{{ system_user }}"
+    state: present
+    key: "{{ lookup('file', 'files/id_rsa.pub') }}"
+
+# ==========================================
+# 1. Firewall (UFW) - Allow NEW Port FIRST
+# ==========================================
+- name: Ensure UFW is installed
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+
+- name: Allow NEW SSH port through UFW BEFORE changing sshd_config
+  community.general.ufw:
+    rule: allow
+    port: "{{ ssh_port | string }}"
+    proto: tcp
+
+- name: Enable UFW and set default policies
+  community.general.ufw:
+    state: enabled
+    default: "{{ ufw_default_incoming_policy }}"
+    direction: incoming
+
+- name: Set UFW default outgoing policy
+  community.general.ufw:
+    default: "{{ ufw_default_outgoing_policy }}"
+    direction: outgoing
+
+# ==========================================
+# 2. SSH Hardening (Change Port, Disable Root & Password)
+# ==========================================
+- name: Secure SSH configuration (sshd_config)
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+    backup: yes
+  loop:
+    - { regexp: "^#?Port", line: "Port {{ ssh_port }}" }
+    - { regexp: "^#?PermitRootLogin", line: "PermitRootLogin no" }
+    - { regexp: "^#?PasswordAuthentication", line: "PasswordAuthentication no" }
+    - { regexp: "^#?X11Forwarding", line: "X11Forwarding no" }
+    - {
+        regexp: "^#?MaxAuthTries",
+        line: "MaxAuthTries {{ ssh_max_auth_tries }}",
+      }
+  notify: Restart SSH Service
+
+# ==========================================
+# 3. The Magic Shift (Restart SSH & Change Ansible Port mid-flight)
+# ==========================================
+- name: Flush handlers to restart SSH immediately with the new port
+  ansible.builtin.meta: flush_handlers
+
+- name: Update Ansible inventory port to the new SSH port
+  ansible.builtin.set_fact:
+    ansible_port: "{{ ssh_port }}"
+    ansible_user: "{{ system_user }}"
+
+- name: Verify SSH connection on the new port
+  ansible.builtin.wait_for_connection:
+    timeout: 60
+    sleep: 5
+
+# ==========================================
+# 4. Close the old SSH Port (22)
+# ==========================================
+- name: Deny old default SSH port (22) in UFW
+  community.general.ufw:
+    rule: deny
+    port: "22"
+    proto: tcp
+
+# ==========================================
+# 5. Fail2Ban Installation
+# ==========================================
+- name: Install and enable Fail2Ban
+  ansible.builtin.apt:
+    name: fail2ban
+    state: present
+
+- name: Ensure fail2ban is running and enabled on boot
+  ansible.builtin.service:
+    name: fail2ban
+    state: started
+    enabled: yes

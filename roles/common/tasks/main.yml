@@ -1,0 +1,51 @@
+---
+- name: Set system timezone
+  community.general.timezone:
+    name: "{{ system_timezone }}"
+  notify: Restart chronyd
+
+- name: Update apt cache and install system & network base packages
+  ansible.builtin.apt:
+    pkg: "{{ system_packages + network_packages }}"
+    state: present
+    update_cache: yes
+
+- name: Ensure chrony (NTP) is enabled and running
+  ansible.builtin.service:
+    name: chrony
+    state: started
+    enabled: yes
+
+- name: Disable SWAP permanently (Base OS requirement)
+  block:
+    - name: Disable SWAP in current session
+      ansible.builtin.command: swapoff -a
+      when: ansible_swaptotal_mb > 0
+      changed_when: false
+
+    - name: Remove swap entry from /etc/fstab to persist after reboot
+      ansible.builtin.replace:
+        path: /etc/fstab
+        regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+        replace: '# \1'
+
+- name: Set up customized MOTD (Message of the Day)
+  ansible.builtin.template:
+    src: motd.j2
+    dest: /etc/motd
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Disable default Ubuntu MOTD news and help text
+  ansible.builtin.file:
+    path: "{{ item }}"
+    mode: "0644"
+  loop:
+    - /etc/default/motd-news
+  ignore_errors: true
+
+- name: Remove execution permission from dynamic MOTD scripts
+  ansible.builtin.command: chmod -x /etc/update-motd.d/10-help-text /etc/update-motd.d/50-motd-news
+  ignore_errors: true
+  changed_when: false

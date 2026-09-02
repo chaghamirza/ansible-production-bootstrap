@@ -1,5 +1,5 @@
 ---
-- name: Setup Docker & Docker-compose on Labs Servers
+- name: Install and Configure Docker Engine & Compose
   hosts: servers
   become: true
   roles:

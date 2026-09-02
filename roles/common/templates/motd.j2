@@ -1,0 +1,35 @@
+=============================================================================
+ ███████╗███████╗██████╗ ██╗   ██╗███████╗██████╗
+ ██╔════╝██╔════╝██╔══██╗██║   ██║██╔════╝██╔══██╗
+ ███████╗█████╗  ██████╔╝██║   ██║█████╗  ██████╔╝
+ ╚════██║██╔══╝  ██╔══██╗╚██╗ ██╔╝██╔══╝  ██╔══██╗
+ ███████║███████╗██║  ██║ ╚████╔╝ ███████╗██║  ██║
+ ╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚══════╝╚═╝  ╚═╝
+=============================================================================
+
+ 🖥️  System Information:
+ -------------------------------------------------------------------------
+  • Hostname:       {{ ansible_hostname }}
+  • OS:             {{ ansible_distribution }} {{ ansible_distribution_version }} ({{ ansible_os_family }})
+  • Kernel:         {{ ansible_kernel }}
+  • Architecture:   {{ ansible_architecture }}
+
+ 🌐  Network:
+ -------------------------------------------------------------------------
+  • Primary IP:     {{ ansible_default_ipv4.address | default('N/A') }}
+  • Interface:      {{ ansible_default_ipv4.interface | default('N/A') }}
+  • Mac Address:    {{ ansible_default_ipv4.macaddress | default('N/A') }}
+
+ ⚙️  Hardware Resources:
+ -------------------------------------------------------------------------
+  • vCPUs:          {{ ansible_processor_vcpus | default('N/A') }} Cores
+  • Memory (RAM):   {{ (ansible_memtotal_mb | default(0) / 1024) | round(2) }} GB
+
+ 🔒  Management:
+ -------------------------------------------------------------------------
+  • Managed by:     Ansible
+  • Date Deployed:  {{ ansible_date_time.date }}
+
+=============================================================================
+ WARNING: Authorized access only. All connections are monitored and recorded.
+=============================================================================
