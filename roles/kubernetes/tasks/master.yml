@@ -1,0 +1,39 @@
+---
+- name: Check if Kubernetes is already initialized
+  stat:
+    path: /etc/kubernetes/admin.conf
+  register: kube_init_stat
+
+- name: Initialize Kubernetes cluster
+  command: >
+    kubeadm init --pod-network-cidr={{ pod_network_cidr }} --cri-socket={{ cri_socket }}
+  when: not kube_init_stat.stat.exists
+  register: kubeadm_init
+
+- name: Create .kube directory for current user
+  file:
+    path: "{{ ansible_env.HOME }}/.kube"
+    state: directory
+    mode: '0755'
+
+- name: Copy admin.conf to user's kube config
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "{{ ansible_env.HOME }}/.kube/config"
+    remote_src: yes
+    mode: '0600'
+
+- name: Install Calico CNI
+  command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  when: kubeadm_init.changed
+
+- name: Generate join command for worker nodes
+  command: kubeadm token create --print-join-command
+  register: join_command_raw
+  changed_when: false
+
+- name: Set join command as a fact
+  set_fact:
+    k8s_join_command: "{{ join_command_raw.stdout }}"

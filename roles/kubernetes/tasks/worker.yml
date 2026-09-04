@@ -1,0 +1,9 @@
+---
+- name: Check if worker node is already joined
+  stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: worker_joined
+
+- name: Join worker node to the cluster
+  command: "{{ hostvars[groups['master'][0]]['k8s_join_command'] }} --cri-socket={{ cri_socket }}"
+  when: not worker_joined.stat.exists

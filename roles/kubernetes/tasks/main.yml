@@ -1,0 +1,9 @@
+---
+- import_tasks: containerd.yml
+- import_tasks: kube_tools.yml
+
+- import_tasks: master.yml
+  when: "'master' in group_names"
+
+- import_tasks: worker.yml
+  when: "'worker' in group_names"

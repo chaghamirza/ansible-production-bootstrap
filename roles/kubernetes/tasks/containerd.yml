@@ -1,0 +1,41 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install containerd
+  apt:
+    name: containerd
+    state: present
+
+- name: Create containerd configuration directory
+  file:
+    path: /etc/containerd
+    state: directory
+    mode: '0755'
+
+- name: Generate and modify containerd default config
+  shell: |
+    containerd config default | \
+    sed 's/SystemdCgroup = false/SystemdCgroup = true/' | \
+    sed 's|sandbox_image = ".*"|sandbox_image = "registry.k8s.io/pause:3.10"|' > /etc/containerd/config.toml
+  args:
+    creates: /etc/containerd/config.toml
+  notify: restart containerd
+
+- name: Ensure containerd is started and enabled
+  systemd:
+    name: containerd
+    state: started
+    enabled: yes
+
+- name: Disable swap for current session
+  command: swapoff -a
+  when: ansible_swaptotal_mb > 0
+
+- name: Disable swap permanently in /etc/fstab
+  replace:
+    path: /etc/fstab
+    regexp: '^([^#\s]+\s+none\s+swap\s+sw.*)$'
+    replace: '# \1'
