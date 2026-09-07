@@ -1,7 +1,7 @@
 ---
 # List of non-root users to add to the docker group
 docker_users:
-  - "ubuntu"
+  - "vagrant"
 
 # Daemon configuration settings
 docker_log_max_size: "100m"
