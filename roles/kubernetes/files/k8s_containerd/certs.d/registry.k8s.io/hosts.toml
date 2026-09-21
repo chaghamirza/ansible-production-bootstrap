@@ -1,0 +1,4 @@
+server = "https://registry.k8s.io"
+
+[host."https://k8s-mirror.liara.ir"]
+  capabilities = ["pull", "resolve"]

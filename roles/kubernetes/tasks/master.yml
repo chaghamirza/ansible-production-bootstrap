@@ -4,6 +4,16 @@
     path: /etc/kubernetes/admin.conf
   register: kube_init_stat
 
+- name: Pull CoreDNS image via ctr
+  command: >
+    ctr -n k8s.io images pull mirror-docker.runflare.com/coredns/coredns:1.12.0
+  when: not kube_init_stat.stat.exists
+
+- name: Tag CoreDNS image for kubeadm expected format
+  command: >
+    ctr -n k8s.io images tag mirror-docker.runflare.com/coredns/coredns:1.12.0 mirror-docker.runflare.com/coredns:v1.12.0
+  when: not kube_init_stat.stat.exists
+
 - name: Initialize Kubernetes cluster
   command: >
     kubeadm init --pod-network-cidr={{ pod_network_cidr }} --cri-socket={{ cri_socket }}
@@ -14,20 +24,20 @@
   file:
     path: "{{ ansible_env.HOME }}/.kube"
     state: directory
-    mode: '0755'
+    mode: "0755"
 
 - name: Copy admin.conf to user's kube config
   copy:
     src: /etc/kubernetes/admin.conf
     dest: "{{ ansible_env.HOME }}/.kube/config"
     remote_src: yes
-    mode: '0600'
+    mode: "0600"
 
 - name: Install Calico CNI
   command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf
-  when: kubeadm_init.changed
+  when: kubeadm_init is defined and kubeadm_init.changed
 
 - name: Generate join command for worker nodes
   command: kubeadm token create --print-join-command

@@ -1,0 +1,10 @@
+server = "https://quay.io"
+
+[host."https://mirror-docker.runflare.com"]
+capabilities = ["pull", "resolve"]
+
+[host."https://quay.iranserver.com"]
+capabilities = ["pull", "resolve"]
+
+[host."https://registry.fara.one"]
+capabilities = ["pull", "resolve"]

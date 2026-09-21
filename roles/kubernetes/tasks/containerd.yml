@@ -41,15 +41,14 @@
   file:
     path: /etc/containerd
     state: directory
-    mode: '0755'
+    mode: "0755"
 
-- name: Generate and modify containerd default config
-  shell: |
-    containerd config default | \
-    sed 's/SystemdCgroup = false/SystemdCgroup = true/' | \
-    sed 's|sandbox_image = ".*"|sandbox_image = "registry.k8s.io/pause:3.10"|' > /etc/containerd/config.toml
-  args:
-    creates: /etc/containerd/config.toml
+- name: Copy containerd configuration and registry mirrors
+  ansible.builtin.copy:
+    src: k8s_containerd/
+    dest: /etc/containerd/
+    owner: root
+    group: root
   notify: restart containerd
 
 - name: Ensure containerd is started and enabled
